@@ -1,0 +1,1400 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Wolfram 15.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       154,          7]
+NotebookDataLength[     54816,       1390]
+NotebookOptionsPosition[     51051,       1325]
+NotebookOutlinePosition[     51512,       1342]
+CellTagsIndexPosition[     51469,       1339]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[" "], "Input",
+ CellChangeTimes->{
+  4.003830503503607*^9},ExpressionUUID->"2805f54c-c879-4239-b0c3-\
+f0d69109d3bc"],
+
+Cell["\<\
+Implementation of the model for COVID-19 pandemic using Planck\
+\[CloseCurlyQuote]s probability distribution presented by Jos\[EAcute] \
+Enrique Amaro and Jos\[EAcute] Nicol\[AAcute]s Orce | Pablo Cordon Blanco
+(Apoyado en modelos generativos multimodales para solventar errores de \
+implementacion y ayudar en la representacion grafica de los resultados.) \
+\>", "Text",
+ CellChangeTimes->{{4.0009675842104893`*^9, 4.00096764395487*^9}, {
+  4.001641129372402*^9, 4.0016411363564997`*^9}, {4.0026074818096933`*^9, 
+  4.002607538649386*^9}, {4.0026098966770906`*^9, 
+  4.002609898924733*^9}},ExpressionUUID->"04f71ffe-c104-48c2-afa3-\
+4e39b32cd2df"],
+
+Cell[CellGroupData[{
+
+Cell["Inicializacion", "Chapter",
+ CellChangeTimes->{{4.0016452218410263`*^9, 
+  4.0016452237847757`*^9}},ExpressionUUID->"ebb2b8a6-ef45-449c-ba02-\
+703540fec42a"],
+
+Cell[CellGroupData[{
+
+Cell["Parameters", "Section",
+ CellChangeTimes->{{4.000958527474614*^9, 4.0009585422493134`*^9}, {
+  4.0016452079125423`*^9, 
+  4.0016452093448677`*^9}},ExpressionUUID->"6edb3768-4302-49eb-8b2b-\
+c19ab42af38a"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Model", " ", "parameters", " ", "for", " ", "Spains", " ", "first", " ", 
+    "wave", " ", 
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"Amaro", " ", "&"}], " ", "Orce"}], ",", " ", "2022"}], 
+     ")"}]}], "*)"}], "\n", 
+  RowBox[{
+   RowBox[{"Ro", " ", ":=", " ", "8"}], " ", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+     RowBox[{"The", " ", "range", " ", "of", " ", "interaction"}], ",", " ", 
+     RowBox[{
+     "indicating", " ", "the", " ", "maximum", " ", "distance", " ", "on", " ",
+       "average", " ", "that", " ", "the", " ", "infection", " ", "can", " ", 
+      "propagate", " ", "in", " ", "a", " ", "give", " ", "day"}]}], " ", 
+    "*)"}], "\n", 
+   RowBox[{"L", " ", ":=", " ", "300"}], "  ", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+     RowBox[{"The", " ", "size", " ", "of", " ", "the", " ", "system"}], ",", 
+     " ", 
+     RowBox[{
+     "the", " ", "average", " ", "distance", " ", "between", " ", 
+      "individuals"}]}], " ", "*)"}], "\n", 
+   RowBox[{"sigma", " ", ":=", " ", "0.1"}], " ", 
+   RowBox[{"(*", 
+    RowBox[{
+     RowBox[{"Cross", " ", "section"}], ",", " ", 
+     RowBox[{
+     "measures", " ", "the", " ", "probability", " ", "of", " ", 
+      "interaction", " ", "between", " ", "two", " ", 
+      RowBox[{"individuals", "."}]}]}], "*)"}], "\n", 
+   RowBox[{"T", " ", ":=", " ", "20"}], " ", 
+   RowBox[{"(*", 
+    RowBox[{"Temperature", ",", " ", 
+     RowBox[{
+     "the", " ", "average", " ", "energy", " ", "of", " ", "the", " ", 
+      "individuals"}]}], "*)"}], "\n", 
+   RowBox[{"pi", " ", ":=", " ", "0.2"}], " ", 
+   RowBox[{"(*", " ", 
+    RowBox[{"The", " ", "infection", " ", "probability"}], " ", "*)"}], "\n", 
+   
+   RowBox[{"tr", " ", ":=", " ", "20.7"}], "  ", 
+   RowBox[{"(*", 
+    RowBox[{
+    "The", " ", "removal", " ", "probability", " ", "time", " ", "parameter", 
+     " ", 
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"time", " ", "at", " ", "which", " ", "Prem"}], "=", 
+       RowBox[{"1", "/", "2"}]}], ")"}]}], "*)"}], "\n", 
+   RowBox[{"b", " ", ":=", " ", "4.5"}], " ", 
+   RowBox[{"(*", 
+    RowBox[{
+    "The", " ", "removal", " ", "probability", " ", "width", " ", 
+     "parameter"}], "*)"}], "\n", 
+   RowBox[{"pd", " ", ":=", " ", "0.3"}], " ", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+    "The", " ", "death", " ", "probability", " ", "of", " ", "removed"}], 
+    "*)"}], "\[IndentingNewLine]", 
+   RowBox[{"delta", " ", ":=", " ", "1", " ", 
+    RowBox[{"(*", 
+     RowBox[{
+      RowBox[{
+      "The", " ", "time", " ", "interval", " ", "for", " ", "a", " ", "given",
+        " ", "simulation", " ", "pass"}], ",", " ", 
+      RowBox[{"in", " ", "days"}]}], "*)"}]}]}]}]], "Input",
+ CellChangeTimes->{{4.000967408378619*^9, 4.000967427931385*^9}, 
+   4.000967850869505*^9},
+ CellLabel->"In[1]:=",ExpressionUUID->"032002af-173d-4030-aaab-d8e5f43df854"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Modelling Distributions", "Section",
+ CellChangeTimes->{{4.000958836793839*^9, 4.0009588432965927`*^9}, {
+  4.000967497356345*^9, 
+  4.000967499594741*^9}},ExpressionUUID->"3455a5b1-2cce-480e-b1e1-\
+316d33760791"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Distribution", " ", "for", " ", "the", " ", "daily", " ", "interaction", " ",
+     "range", " ", "R"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"Rdist", " ", ":=", " ", 
+    RowBox[{"ExponentialDistribution", "[", 
+     FractionBox["1", "Ro"], "]"}]}], ";"}], " "}]], "Input",
+ CellChangeTimes->{{4.000958349093162*^9, 4.000958362604026*^9}, {
+  4.0009584106349154`*^9, 4.0009584115216923`*^9}, {4.00095903596105*^9, 
+  4.00095906104097*^9}, {4.0009591376328907`*^9, 4.000959160209283*^9}, {
+  4.000964551120586*^9, 4.000964556216864*^9}, {4.0009677027388897`*^9, 
+  4.0009677265620403`*^9}},
+ CellLabel->"In[10]:=",ExpressionUUID->"455a24f4-9b6e-4c77-a01f-a81f8bd36d68"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Discrete", " ", "Planck", " ", "distribution", " ", "for", " ", "the", " ",
+     "energy"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"P", "[", "n_", "]"}], " ", ":=", " ", 
+    FractionBox[
+     RowBox[{"Exp", "[", 
+      FractionBox[
+       RowBox[{"-", "n"}], "T"], "]"}], 
+     RowBox[{
+      RowBox[{"Exp", "[", 
+       FractionBox["1", "T"], "]"}], " ", "-", " ", "1"}]]}], 
+   ";"}]}]], "Input",
+ CellChangeTimes->{{4.0009592393580313`*^9, 4.000959259400814*^9}, {
+  4.000959369232085*^9, 4.0009593880880136`*^9}, {4.0009677346267033`*^9, 
+  4.000967770546481*^9}},
+ CellLabel->"In[11]:=",ExpressionUUID->"94326346-3647-469d-9053-73f06a88a4b3"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"nDist", " ", "=", " ", 
+    RowBox[{"GeometricDistribution", "[", 
+     RowBox[{"1", " ", "-", " ", 
+      RowBox[{"Exp", "[", 
+       RowBox[{
+        RowBox[{"-", "1"}], "/", "T"}], "]"}]}], "]"}]}], ";"}], 
+  " "}]], "Input",
+ CellChangeTimes->{{4.001641162265221*^9, 4.001641183004896*^9}},
+ CellLabel->"In[12]:=",ExpressionUUID->"24758585-57f9-4e53-a377-068b2d72cddc"],
+
+Cell[BoxData[
+ RowBox[{"(*", " ", 
+  RowBox[{
+   RowBox[{"nDist", " ", "=", " ", 
+    RowBox[{"ProbabilityDistribution", "[", 
+     RowBox[{
+      RowBox[{"P", "[", "n", "]"}], ",", " ", 
+      RowBox[{"{", 
+       RowBox[{"n", ",", " ", "0", ",", " ", "Infinity", ",", " ", "1"}], 
+       "}"}], ",", " ", 
+      RowBox[{"Assumptions", "->", 
+       RowBox[{"T", " ", ">", " ", "0"}]}], ",", " ", 
+      RowBox[{"Method", "->", "\"\<Normalize\>\""}]}], "]"}]}], ";"}], " ", 
+  "*)"}]], "Input",
+ CellChangeTimes->{{4.0009593905698347`*^9, 4.000959427647933*^9}, 
+   4.000964546704623*^9, {4.000967755041953*^9, 4.0009677621460323`*^9}, {
+   4.001641194534416*^9, 4.001641201516461*^9}},
+ CellLabel->"In[13]:=",ExpressionUUID->"08ee26fe-8355-47a1-a4e8-ee653cdb1fda"],
+
+Cell[BoxData[
+ RowBox[{"(*", 
+  RowBox[{" ", 
+   RowBox[{
+    RowBox[{
+    "The", " ", "last", " ", "line", " ", "is", " ", "identical", " ", "to", " ",
+      "setting", " ", "up", " ", "nDist", " ", "as", " ", "a", " ", 
+     "geometric", " ", "distribution", " ", "of", " ", "parameter", " ", 
+     "1"}], " ", "-", " ", 
+    RowBox[{"Exp", 
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"-", "1"}], "/", "T"}], ")"}]}]}], ")"}], "*)"}]], "Input",
+ CellChangeTimes->{{4.000967782672701*^9, 4.0009678214812517`*^9}},
+ CellLabel->"In[14]:=",ExpressionUUID->"6a4e159f-1273-439e-a81e-58e67bb5bd88"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"deathProbability", " ", "=", " ", 
+   RowBox[{"BernoulliDistribution", "[", "pd", "]"}]}], ";"}]], "Input",
+ CellChangeTimes->{{4.000964831259735*^9, 4.0009648683184834`*^9}, 
+   4.0009678605698023`*^9},
+ CellLabel->"In[15]:=",ExpressionUUID->"38b42622-f932-4eec-ad10-97c8dfa35260"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"removalFunction", "[", "t_", "]"}], " ", ":=", " ", 
+   FractionBox["1", 
+    RowBox[{"1", "+", 
+     RowBox[{"Exp", "[", 
+      FractionBox[
+       RowBox[{"tr", " ", "-", " ", "t"}], "b"], "]"}]}]]}], ";"}]], "Input",
+ CellChangeTimes->{{4.000961083956705*^9, 4.0009611366300163`*^9}, 
+   4.0009678761938047`*^9},
+ CellLabel->"In[16]:=",ExpressionUUID->"ebb17dfb-37b8-42c4-a0f7-b401ae0e9265"],
+
+Cell[BoxData[
+ RowBox[{" ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+    RowBox[{"removalProbability", " ", "=", " ", 
+     RowBox[{"ProbabilityDistribution", "[", 
+      RowBox[{
+       RowBox[{"removalFunction", "[", "t", "]"}], ",", " ", 
+       RowBox[{"{", 
+        RowBox[{"t", ",", " ", "0", ",", " ", "Infinity"}], "}"}], ",", " ", 
+       RowBox[{"Assumptions", "->", 
+        RowBox[{"{", 
+         RowBox[{
+          RowBox[{"tr", " ", ">", "0"}], ",", " ", 
+          RowBox[{"b", ">", "0"}]}], "}"}]}]}], "]"}]}], ";"}], " ", "*)"}], 
+  "\[IndentingNewLine]"}]], "Input",
+ CellChangeTimes->{{4.000961126107676*^9, 4.0009611784609222`*^9}, 
+   4.000964543651061*^9, {4.000967888529471*^9, 4.000967891769252*^9}},
+ CellLabel->"In[17]:=",ExpressionUUID->"19eafe2c-a699-4e65-96f8-f6b58150b3ba"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{
+    RowBox[{
+    "Stochastic", " ", "rounding", " ", "of", " ", "the", " ", "number", " ", 
+     "of", " ", "Interactions", " ", "N_int"}], " ", "=", " ", 
+    RowBox[{
+     RowBox[{"n", " ", "rho", " ", "sigma", "\[IndentingNewLine]", "   ", 
+      RowBox[{"Floor", "[", "x", "]"}]}], " ", "+", " ", 
+     RowBox[{
+     "1", " ", "with", " ", "probability", " ", "equal", " ", "to", " ", 
+      "the", " ", "fractional", " ", "part", " ", "of", " ", "x"}]}]}], 
+   "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"stochasticRound", "[", "x_", "]"}], " ", ":=", " ", 
+    RowBox[{
+     RowBox[{"Floor", "[", "x", "]"}], " ", "+", " ", 
+     RowBox[{"RandomVariate", "[", 
+      RowBox[{"BernoulliDistribution", "[", 
+       RowBox[{"x", " ", "-", " ", 
+        RowBox[{"Floor", "[", "x", "]"}]}], "]"}], "]"}]}]}], 
+   ";"}]}]], "Input",
+ CellChangeTimes->{{4.001642080691206*^9, 4.001642159490055*^9}},
+ CellLabel->"In[18]:=",ExpressionUUID->"90b1f1ae-844d-4666-a586-a057b7868f11"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Grid Initialization and Helper functions", "Section",
+ CellChangeTimes->{{4.000967516451034*^9, 
+  4.000967526874634*^9}},ExpressionUUID->"8c3dccfb-05fb-454e-9019-\
+dc8fa3688199"],
+
+Cell[BoxData[
+ RowBox[{"numberOfCells", " ", "=", " ", 
+  RowBox[{"L", "^", "2"}]}]], "Input",
+ CellChangeTimes->{{4.000959785612261*^9, 4.000959813678813*^9}, {
+  4.0009598839595423`*^9, 4.0009598851586027`*^9}},
+ CellLabel->"In[19]:=",ExpressionUUID->"fe8e3ded-6d75-4418-9a0e-b85f91490414"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+    RowBox[{"In", " ", "the", " ", "initial", " ", "state", " ", 
+     RowBox[{"(", 
+      RowBox[{"t", "=", "0"}], ")"}]}], ",", " ", 
+    RowBox[{
+    "all", " ", "the", " ", "individuals", " ", "are", " ", "susceptible"}]}],
+    " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"susceptibles", " ", "=", " ", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"1", ",", "  ", "numberOfCells"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"infected", " ", "=", " ", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", " ", "numberOfCells"}], "]"}]}], ";", 
+    RowBox[{"recovered", " ", "=", " ", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", " ", "numberOfCells"}], "]"}]}], ";", 
+    RowBox[{"dead", " ", "=", " ", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", " ", "numberOfCells"}], "]"}]}], ";", 
+    RowBox[{"infectionTime", " ", "=", " ", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", "  ", "numberOfCells"}], "]"}]}], ";"}]}]}]], "Input",\
+
+ CellChangeTimes->{{4.000965130245982*^9, 4.000965131998432*^9}, {
+  4.0016421788821487`*^9, 4.001642193761279*^9}, {4.0016422386336727`*^9, 
+  4.0016422654993563`*^9}},
+ CellLabel->"In[20]:=",ExpressionUUID->"f0886efc-f615-4d4b-9703-50bd3c5667a7"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "One", " ", "initially", " ", "infected", " ", "cell", " ", "k0", " ", 
+    "at", " ", "the", " ", "center", " ", "of", " ", "the", " ", "grid"}], 
+   "*)"}], "\[IndentingNewLine]", 
+  RowBox[{"(*", " ", 
+   RowBox[{"!", 
+    RowBox[{
+     RowBox[{"Mathematica", " ", "uses", " ", "1"}], "-", 
+     RowBox[{"indexed", " ", "arrays"}]}]}], " ", "*)"}], 
+  "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"k0", " ", "=", " ", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"Quotient", "[", 
+        RowBox[{"L", ",", " ", "2"}], "]"}], "*", "L"}], " ", "+", " ", 
+      RowBox[{"Quotient", "[", 
+       RowBox[{"L", ",", "2"}], " ", "]"}], " ", "+", " ", "1"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"susceptibles", "[", 
+      RowBox[{"[", "k0", "]"}], "]"}], " ", "=", " ", "0"}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"infected", "[", 
+      RowBox[{"[", "k0", "]"}], "]"}], " ", "=", " ", "1"}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"infectionTime", "[", 
+      RowBox[{"[", "k0", "]"}], "]"}], " ", "=", " ", "0"}], 
+    ";"}]}]}]], "Input",
+ CellChangeTimes->{{4.0016422771815853`*^9, 4.0016422896487217`*^9}, {
+  4.001642333512336*^9, 4.0016424027359962`*^9}},
+ CellLabel->"In[22]:=",ExpressionUUID->"3654a306-dd2a-4a99-bc30-bb326558a97d"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{
+   "Devuelve", " ", "directamente", " ", "una", " ", "lista", " ", "con", " ",
+     "nInt", " ", "celdas", " ", "aleatorias", " ", "dentro", " ", "del", " ",
+     "cuadrado", " ", "de", " ", "radio", " ", "R", " ", "centrado", " ", 
+    "en", " ", "la", " ", "celda", " ", "k", " ", "de", " ", "la", " ", 
+    "cuadricula"}], " ", "*)"}], 
+  RowBox[{
+   RowBox[{
+    RowBox[{"pickTargets", "[", 
+     RowBox[{"k_", ",", "R_", ",", "nInt_"}], "]"}], ":=", 
+    RowBox[{"Module", "[", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{
+       "row", ",", "col", ",", "r", ",", "rowMin", ",", "rowMax", ",", 
+        "colMin", ",", "colMax", ",", "randRows", ",", "randCols"}], "}"}], ",", 
+      RowBox[{"(*", 
+       RowBox[{"Radio", " ", "entero", " ", "de", " ", "celdas", " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"si", " ", "R"}], "<", "1"}], ",", 
+          RowBox[{
+          "al", " ", "menos", " ", "la", " ", "propia", " ", "celda"}]}], 
+         ")"}]}], "*)"}], "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"r", "=", 
+        RowBox[{"Round", "[", "R", "]"}]}], ";", "\[IndentingNewLine]", 
+       "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{"Coordenadas", " ", "2", "D", " ", 
+         RowBox[{"(", 
+          RowBox[{"fila", ",", "columna"}], ")"}], " ", "en", " ", "base", " ",
+          "1", " ", "de", " ", "la", " ", "celda", " ", "k"}], "*)"}], 
+       "\[IndentingNewLine]", 
+       RowBox[{"row", "=", 
+        RowBox[{
+         RowBox[{"Quotient", "[", 
+          RowBox[{
+           RowBox[{"k", "-", "1"}], ",", "L"}], "]"}], "+", "1"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"col", "=", 
+        RowBox[{
+         RowBox[{"Mod", "[", 
+          RowBox[{
+           RowBox[{"k", "-", "1"}], ",", "L"}], "]"}], "+", "1"}]}], ";", 
+       "\[IndentingNewLine]", "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{
+        "L\[IAcute]mites", " ", "del", " ", "cuadrado", " ", "recortados", " ",
+          "a", " ", "los", " ", 
+         RowBox[{"bordes", "[", 
+          RowBox[{"1", ",", "L"}], "]"}], " ", "de", " ", "la", " ", 
+         "cuadr\[IAcute]cula"}], "*)"}], 
+       RowBox[{"(*", 
+        RowBox[{"Esto", " ", "cuesta", " ", "O", 
+         RowBox[{"(", "1", ")"}], " ", "y", " ", "se", " ", "ejecuta", " ", 
+         "UNA", " ", "sola", " ", "vez", " ", "por", " ", "infectado"}], 
+        "*)"}], "\[IndentingNewLine]", 
+       RowBox[{"rowMin", "=", 
+        RowBox[{"Max", "[", 
+         RowBox[{"1", ",", 
+          RowBox[{"row", "-", "r"}]}], "]"}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{"rowMax", "=", 
+        RowBox[{"Min", "[", 
+         RowBox[{"L", ",", 
+          RowBox[{"row", "+", "r"}]}], "]"}]}], ";", "\[IndentingNewLine]", 
+       "\[IndentingNewLine]", 
+       RowBox[{"colMin", "=", 
+        RowBox[{"Max", "[", 
+         RowBox[{"1", ",", 
+          RowBox[{"col", "-", "r"}]}], "]"}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{"colMax", "=", 
+        RowBox[{"Min", "[", 
+         RowBox[{"L", ",", 
+          RowBox[{"col", "+", "r"}]}], "]"}]}], ";", "\[IndentingNewLine]", 
+       "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{"Muestreamos", " ", 
+         RowBox[{"las", "'"}], 
+         RowBox[{"nInt", "'"}], " ", "filas", " ", "y", " ", "columnas", " ", 
+         "de", " ", "golpe", " ", "en", " ", "O", 
+         RowBox[{"(", "nInt", ")"}]}], "*)"}], 
+       RowBox[{"randRows", "=", 
+        RowBox[{"RandomInteger", "[", 
+         RowBox[{
+          RowBox[{"{", 
+           RowBox[{"rowMin", ",", "rowMax"}], "}"}], ",", "nInt"}], "]"}]}], ";",
+        "\[IndentingNewLine]", 
+       RowBox[{"randCols", "=", 
+        RowBox[{"RandomInteger", "[", 
+         RowBox[{
+          RowBox[{"{", 
+           RowBox[{"colMin", ",", "colMax"}], "}"}], ",", "nInt"}], "]"}]}], ";",
+        "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{
+        "Convertimos", " ", "de", " ", "vuelta", " ", "a", " ", 
+         "\[IAcute]ndice", " ", "lineal", " ", "1", "D", " ", "en", " ", 
+         RowBox[{"{", 
+          RowBox[{"1", ",", "...", ",", 
+           RowBox[{"L", "^", "2"}]}], "}"}]}], "*)"}], "\[IndentingNewLine]", 
+       
+       RowBox[{
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"randRows", "-", "1"}], ")"}], "*", "L"}], "+", 
+        "randCols"}]}]}], "]"}]}], ";"}]}]], "Input",
+ CellChangeTimes->{{4.0016437445577717`*^9, 4.001643779885079*^9}, {
+  4.002609737831983*^9, 
+  4.002609738959755*^9}},ExpressionUUID->"7e9329a6-f9ad-474d-83e1-\
+07c7a215cab6"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Ejecucion", "Chapter",
+ CellChangeTimes->{{4.0016452585928087`*^9, 
+  4.001645259960677*^9}},ExpressionUUID->"40e18cd5-e7d2-4639-a444-\
+971cd449b1e4"],
+
+Cell[CellGroupData[{
+
+Cell["Main Loop", "Section",
+ CellChangeTimes->{{4.0009675573623867`*^9, 
+  4.0009675593864937`*^9}},ExpressionUUID->"eb02fa84-9c3f-4e60-b7ea-\
+b254c4a8dc3c"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{
+   "Avanza", " ", "el", " ", "estado", " ", "epid\[EAcute]mico", " ", "un", " ",
+     "d\[IAcute]a", " ", 
+    RowBox[{"(", 
+     RowBox[{"paso", " ", "de", " ", "tiempo", " ", "discreto", " ", "t"}], 
+     ")"}]}], "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"timeStep", "[", "t_", "]"}], ":=", 
+    RowBox[{"Module", "[", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"activeInfected", ",", 
+        RowBox[{"(*", 
+         RowBox[{
+         "Lista", " ", "de", " ", "celdas", " ", "que", " ", "ya", " ", 
+          "estaban", " ", "infectadas", " ", "al", " ", "inicio", " ", "de", " ",
+           "t"}], "*)"}], "R", ",", "n", ",", "nInteraction", ",", "targets", 
+        ",", "susceptibleTargets", ",", "newInfections", ",", "infectedCells",
+         ",", "remProbability", ",", "isRemoved", ",", "isDead"}], "}"}], ",",
+       "\[IndentingNewLine]", 
+      RowBox[{"(*", 
+       RowBox[{
+        RowBox[{"PASO", " ", "0"}], ":", 
+        RowBox[{
+        "Captura", " ", "s\[IAcute]ncrona", " ", "de", " ", "los", " ", 
+         "infectados", " ", "activos", " ", "al", " ", "inicio", " ", "del", " ",
+          "d\[IAcute]a", " ", "t"}]}], "*)"}], "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"activeInfected", "=", 
+        RowBox[{"Pick", "[", 
+         RowBox[{
+          RowBox[{"Range", "[", "numberOfCells", "]"}], ",", "infected", ",", 
+          "1"}], "]"}]}], ";", "\[IndentingNewLine]", "\[IndentingNewLine]", 
+       RowBox[{"If", "[", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"Length", "[", "activeInfected", "]"}], "==", "0"}], ",", 
+         RowBox[{"Return", "[", "]"}]}], "]"}], ";", "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{"FASE", " ", 
+         RowBox[{"I", ":", 
+          RowBox[{"Proceso", " ", "de", " ", "propagaci\[OAcute]n", " ", 
+           RowBox[{"(", 
+            RowBox[{"Contagio", " ", "local"}], ")"}]}]}]}], "*)"}], 
+       "\[IndentingNewLine]", 
+       RowBox[{"Do", "[", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"n", "=", 
+           RowBox[{"RandomVariate", "[", "nDist", "]"}]}], ";", 
+          "\[IndentingNewLine]", 
+          RowBox[{"nInteraction", "=", 
+           RowBox[{"stochasticRound", "[", 
+            RowBox[{"n", "*", "1", "*", "sigma"}], "]"}]}], ";", 
+          "\[IndentingNewLine]", 
+          RowBox[{"If", "[", 
+           RowBox[{
+            RowBox[{"nInteraction", ">", "0"}], ",", 
+            RowBox[{
+             RowBox[{"R", "=", 
+              RowBox[{"RandomVariate", "[", "Rdist", "]"}]}], ";", 
+             "\[IndentingNewLine]", 
+             RowBox[{"(*", 
+              RowBox[{
+              "3.", " ", "Obtenemos", " ", "los", " ", "N_int", " ", 
+               "objetivos", " ", "en", " ", "la", " ", "regi\[OAcute]n", " ", 
+               "cuadrada", " ", "de", " ", "lado", " ", "2", 
+               RowBox[{"R", "."}]}], "*)"}], 
+             RowBox[{"targets", "=", 
+              RowBox[{"pickTargets", "[", 
+               RowBox[{"k", ",", "R", ",", "nInteraction"}], "]"}]}], ";", 
+             "\[IndentingNewLine]", 
+             RowBox[{"(*", " ", 
+              RowBox[{
+              "Eliminamos", " ", "duplicados", " ", "por", " ", "si", " ", 
+               "el", " ", "muestreo", " ", "con", " ", "reemplazo", " ", 
+               "eligi\[OAcute]", " ", "dos", " ", "veces", " ", "la", " ", 
+               "misma", " ", "celda"}], "*)"}], "\[IndentingNewLine]", 
+             RowBox[{"Do", "[", 
+              RowBox[{
+               RowBox[{"If", "[", 
+                RowBox[{
+                 RowBox[{
+                  RowBox[{"susceptibles", "[", 
+                   RowBox[{"[", "x", "]"}], "]"}], "==", "1"}], ",", 
+                 RowBox[{
+                  RowBox[{"If", "[", 
+                   RowBox[{
+                    RowBox[{
+                    RowBox[{"RandomVariate", "[", 
+                    RowBox[{"BernoulliDistribution", "[", "pi", "]"}], "]"}], 
+                    "==", "1"}], ",", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"susceptibles", "[", 
+                    RowBox[{"[", "x", "]"}], "]"}], "=", "0"}], ";", 
+                    "\[IndentingNewLine]", 
+                    RowBox[{
+                    RowBox[{"infected", "[", 
+                    RowBox[{"[", "x", "]"}], "]"}], "=", "1"}], ";", 
+                    "\[IndentingNewLine]", 
+                    RowBox[{
+                    RowBox[{"infectionTime", "[", 
+                    RowBox[{"[", "x", "]"}], "]"}], "=", "t"}], ";"}]}], 
+                   "]"}], ";"}]}], "]"}], ",", 
+               RowBox[{"{", 
+                RowBox[{"x", ",", "targets"}], "}"}]}], "]"}], ";"}]}], 
+           "]"}]}], ",", 
+         RowBox[{"{", 
+          RowBox[{"k", ",", "activeInfected"}], "}"}]}], "]"}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{"FASE", " ", 
+         RowBox[{"II", ":", 
+          RowBox[{"Proceso", " ", "de", " ", "retiro"}]}]}], "*)"}], 
+       "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{
+         RowBox[{
+         "Se", " ", "ejecuta", " ", "una", " ", "vez", " ", "procesados", " ",
+           "todos", " ", "los", " ", "contagios", " ", "del", " ", 
+          "d\[IAcute]a", " ", "t"}], ","}], "*)"}], 
+       RowBox[{"Do", "[", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"remProbability", "=", 
+           RowBox[{"removalFunction", "[", 
+            RowBox[{"t", "-", 
+             RowBox[{"infectionTime", "[", 
+              RowBox[{"[", "k", "]"}], "]"}]}], "]"}]}], ";", 
+          "\[IndentingNewLine]", 
+          RowBox[{"isRemoved", "=", 
+           RowBox[{"RandomVariate", "[", 
+            RowBox[{"BernoulliDistribution", "[", "remProbability", "]"}], 
+            "]"}]}], ";", "\[IndentingNewLine]", 
+          RowBox[{"If", "[", 
+           RowBox[{
+            RowBox[{"isRemoved", "==", "1"}], ",", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"infected", "[", 
+               RowBox[{"[", "k", "]"}], "]"}], "=", "0"}], ";", 
+             "\[IndentingNewLine]", 
+             RowBox[{"(*", 
+              RowBox[{
+              "Decidimos", " ", "si", " ", "el", " ", "retiro", " ", 
+               "corresponde", " ", "a", " ", "fallecimiento", " ", 
+               RowBox[{"(", "pd", ")"}], " ", "o", " ", 
+               "recuperaci\[OAcute]n"}], "*)"}], 
+             RowBox[{"isDead", "=", 
+              RowBox[{"RandomVariate", "[", "deathProbability", "]"}]}], ";", 
+             "\[IndentingNewLine]", 
+             RowBox[{"If", "[", 
+              RowBox[{
+               RowBox[{"isDead", "==", "1"}], ",", 
+               RowBox[{
+                RowBox[{"dead", "[", 
+                 RowBox[{"[", "k", "]"}], "]"}], "=", "1"}], ",", 
+               RowBox[{
+                RowBox[{"recovered", "[", 
+                 RowBox[{"[", "k", "]"}], "]"}], "=", "1"}]}], "]"}], ";"}]}],
+            "]"}]}], ",", 
+         RowBox[{"{", 
+          RowBox[{"k", ",", "activeInfected"}], "}"}]}], "]"}], ";"}]}], 
+     "]"}]}], ";"}]}]], "Input",
+ CellChangeTimes->{{4.001643214974173*^9, 4.001643335280995*^9}, {
+  4.001643396832818*^9, 4.0016435105996313`*^9}, {4.001643631150778*^9, 
+  4.0016436592068043`*^9}, {4.001643711932767*^9, 4.001643713067746*^9}, {
+  4.0016437980573072`*^9, 4.0016437998708344`*^9}, {4.001643971606534*^9, 
+  4.001643994134008*^9}, {4.0026097019136143`*^9, 
+  4.002609731048637*^9}},ExpressionUUID->"cd9cd3cb-9bca-4be6-9134-\
+87dbb411551b"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Simulation", "Chapter",
+ CellChangeTimes->{{4.001645265880892*^9, 4.0016452680245047`*^9}, {
+  4.002609781205201*^9, 
+  4.002609781316827*^9}},ExpressionUUID->"5b0a8101-609b-43af-97f5-\
+1bc8389959c9"],
+
+Cell[CellGroupData[{
+
+Cell["Running the simulation", "Section",
+ CellChangeTimes->{{4.00096756710674*^9, 
+  4.0009675694664593`*^9}},ExpressionUUID->"e532a7b5-9a3f-42de-bb58-\
+4d9a6409d3f5"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{"Simulation", " ", "period"}], " ", "*)"}], "\n", 
+  RowBox[{
+   RowBox[{"numDays", " ", "=", " ", "200"}], ";"}]}]], "Input",
+ CellChangeTimes->{{4.000967571409835*^9, 4.000967574002323*^9}, {
+  4.001643014541868*^9, 4.001643087778767*^9}, {4.002609765885881*^9, 
+  4.0026097734773827`*^9}},ExpressionUUID->"77ae7fa7-e71f-4b48-a511-\
+c041e9fa948d"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{
+    RowBox[{
+    "History", " ", "arrays", " ", "to", " ", "store", " ", "daily", " ", 
+     "totals", " ", "S", 
+     RowBox[{"(", "t", ")"}]}], ",", " ", 
+    RowBox[{"I", 
+     RowBox[{"(", "t", ")"}]}], ",", " ", 
+    RowBox[{"R", 
+     RowBox[{"(", "t", ")"}]}], ",", " ", 
+    RowBox[{"D", 
+     RowBox[{"(", "t", ")"}], " ", "and", " ", "daily", " ", "deaths"}]}], 
+   "*)"}], "\n", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"historyS", " ", "=", " ", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", " ", "numDays"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"historyI", " ", "=", " ", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", " ", "numDays"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"historyR", " ", "=", " ", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", " ", "numDays"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"historyD", " ", "=", " ", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", " ", "numDays"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"dailyDeaths", " ", "=", " ", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", " ", "numDays"}], "]"}]}], ";"}]}]}]], "Input",
+ CellChangeTimes->{{4.000967571409835*^9, 4.000967574002323*^9}, {
+  4.001643014541868*^9, 4.0016430953302717`*^9}},
+ CellLabel->"In[29]:=",ExpressionUUID->"87b64ada-b013-449e-8ed5-3f1b927f6b07"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"For", "[", 
+   RowBox[{
+    RowBox[{"day", " ", "=", " ", "1"}], ",", " ", 
+    RowBox[{"day", " ", "<=", " ", "numDays"}], ",", " ", 
+    RowBox[{"day", " ", "+=", " ", "delta"}], ",", "\n", "  ", 
+    RowBox[{"(*", 
+     RowBox[{"Simulating", " ", 
+      RowBox[{"Spain", "'"}], "s", " ", "lockdown", " ", "on", " ", "day", " ",
+       "20", " ", "by", " ", "reducing", " ", "Ro", " ", "from", " ", "8", " ",
+       "to", " ", "3"}], "*)"}], "\n", "  ", 
+    RowBox[{
+     RowBox[{"If", "[", 
+      RowBox[{
+       RowBox[{"day", " ", "==", " ", "20"}], ",", " ", 
+       RowBox[{"Ro", " ", "=", " ", "3"}]}], "]"}], ";", "\n", "  ", 
+     RowBox[{"(*", 
+      RowBox[{
+      "Execute", " ", "one", " ", "Monte", " ", "Carlo", " ", "time", " ", 
+       "step"}], "*)"}], "\n", "  ", 
+     RowBox[{"timeStep", "[", "day", "]"}], ";", "\n", "  ", 
+     RowBox[{"(*", 
+      RowBox[{
+      "Store", " ", "cumulative", " ", "counts", " ", "at", " ", "the", " ", 
+       "end", " ", "of", " ", "the", " ", "day"}], "*)"}], "\n", "  ", 
+     RowBox[{
+      RowBox[{"historyS", "[", 
+       RowBox[{"[", "day", "]"}], "]"}], " ", "=", " ", 
+      RowBox[{"Total", "[", "susceptibles", "]"}]}], ";", "\n", "  ", 
+     RowBox[{
+      RowBox[{"historyI", "[", 
+       RowBox[{"[", "day", "]"}], "]"}], " ", "=", " ", 
+      RowBox[{"Total", "[", "infected", "]"}]}], ";", "\n", "  ", 
+     RowBox[{
+      RowBox[{"historyR", "[", 
+       RowBox[{"[", "day", "]"}], "]"}], " ", "=", " ", 
+      RowBox[{"Total", "[", "recovered", "]"}]}], ";", "\n", "  ", 
+     RowBox[{
+      RowBox[{"historyD", "[", 
+       RowBox[{"[", "day", "]"}], "]"}], " ", "=", " ", 
+      RowBox[{"Total", "[", "dead", "]"}]}], ";", "\n", "  ", 
+     RowBox[{"(*", 
+      RowBox[{"Compute", " ", "daily", " ", "increment", " ", "of", " ", 
+       RowBox[{"deaths", ":", " ", 
+        RowBox[{"Delta", " ", "D", 
+         RowBox[{"(", "t", ")"}]}]}]}], "*)"}], "\n", "  ", 
+     RowBox[{
+      RowBox[{"dailyDeaths", "[", 
+       RowBox[{"[", "day", "]"}], "]"}], " ", "=", " ", 
+      RowBox[{"If", "[", 
+       RowBox[{
+        RowBox[{"day", " ", "==", " ", "1"}], ",", " ", 
+        RowBox[{"historyD", "[", 
+         RowBox[{"[", "1", "]"}], "]"}], ",", " ", 
+        RowBox[{
+         RowBox[{"historyD", "[", 
+          RowBox[{"[", "day", "]"}], "]"}], " ", "-", " ", 
+         RowBox[{"historyD", "[", 
+          RowBox[{"[", 
+           RowBox[{"day", " ", "-", " ", "1"}], "]"}], "]"}]}]}], "]"}]}], 
+     ";"}]}], "]"}], ";"}]], "Input",
+ CellChangeTimes->{{4.000967571409835*^9, 4.000967574002323*^9}, {
+  4.001643014541868*^9, 4.001643102395179*^9}},
+ CellLabel->"In[34]:=",ExpressionUUID->"2ad4ab68-639b-4b9f-bee7-d1d42d01f0d0"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{
+    RowBox[{"Plot", " ", "1"}], ":", " ", 
+    RowBox[{"SIR", " ", "+", " ", 
+     RowBox[{"D", " ", "Cumulative", " ", "Curves"}]}]}], "*)"}], "\n", 
+  RowBox[{"ListLinePlot", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+     "historyS", ",", " ", "historyI", ",", " ", "historyR", ",", " ", 
+      "historyD"}], "}"}], ",", "\n", " ", 
+    RowBox[{"PlotLegends", " ", "->", " ", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Susceptible S(t)\>\"", ",", " ", "\"\<Infected I(t)\>\"", ",",
+        " ", "\"\<Recovered R(t)\>\"", ",", " ", "\"\<Dead D(t)\>\""}], 
+      "}"}]}], ",", "\n", " ", 
+    RowBox[{"PlotStyle", " ", "->", " ", 
+     RowBox[{"{", 
+      RowBox[{
+      "Green", ",", " ", "Red", ",", " ", "Blue", ",", " ", "Yellow"}], 
+      "}"}]}], ",", " ", 
+    RowBox[{"Frame", " ", "->", " ", "True"}], ",", "\n", " ", 
+    RowBox[{"FrameLabel", " ", "->", " ", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Days\>\"", ",", " ", "\"\<Number of Individuals\>\""}], 
+      "}"}]}], ",", "\n", " ", 
+    RowBox[{
+    "PlotLabel", " ", "->", 
+     " ", "\"\<Monte Carlo Planck (MCP) Model Evolution\>\""}]}], 
+   "]"}]}]], "Input",
+ CellChangeTimes->{{4.000967571409835*^9, 4.000967574002323*^9}, {
+  4.001643014541868*^9, 4.001643108621757*^9}, {4.001644067309162*^9, 
+  4.001644068147604*^9}},
+ CellLabel->"In[35]:=",ExpressionUUID->"d006d62a-4b8c-4e1a-8709-d24c5c385009"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{
+    RowBox[{"Plot", " ", "2"}], ":", " ", 
+    RowBox[{"Daily", " ", "Deaths", " ", 
+     RowBox[{"(", 
+      RowBox[{"Delta", " ", "D", 
+       RowBox[{"(", "t", ")"}]}], ")"}], " ", "like", " ", 
+     RowBox[{"Fig", ".", " ", "1"}], " ", 
+     RowBox[{"(", "right", ")"}], " ", "in", " ", "the", " ", "paper"}]}], 
+   "*)"}], "\n", 
+  RowBox[{"DiscretePlot", "[", 
+   RowBox[{
+    RowBox[{"dailyDeaths", "[", 
+     RowBox[{"[", "t", "]"}], "]"}], ",", " ", 
+    RowBox[{"{", 
+     RowBox[{"t", ",", " ", "1", ",", " ", "numDays"}], "}"}], ",", " ", 
+    RowBox[{"PlotStyle", " ", "->", " ", "Purple"}], ",", "\n", " ", 
+    RowBox[{"Frame", " ", "->", " ", "True"}], ",", " ", 
+    RowBox[{"FrameLabel", " ", "->", " ", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Days\>\"", ",", " ", "\"\<Deaths / Day\>\""}], "}"}]}], ",",
+     "\n", " ", 
+    RowBox[{
+    "PlotLabel", " ", "->", 
+     " ", "\"\<Daily Deaths (with Lockdown at Day 20)\>\""}]}], 
+   "]"}]}]], "Input",
+ CellChangeTimes->{{4.000967571409835*^9, 4.000967574002323*^9}, {
+  4.001643014541868*^9, 4.0016431131736183`*^9}},
+ CellLabel->"In[36]:=",ExpressionUUID->"cde708be-caac-4738-86ea-62a3c8a26bae"],
+
+Cell[BoxData[
+ RowBox[{"\n", 
+  RowBox[{"(*", 
+   RowBox[{
+    RowBox[{"Plot", " ", "3"}], ":", " ", 
+    RowBox[{
+    "2", "D", " ", "Spatial", " ", "Grid", " ", "Map", " ", "of", " ", "the", 
+     " ", "Final", " ", "State", " ", 
+     RowBox[{"(", 
+      RowBox[{"like", " ", 
+       RowBox[{"Fig", ".", " ", "4"}], " ", "in", " ", "the", " ", "paper"}], 
+      ")"}]}]}], "*)"}], "\n", 
+  RowBox[{"(*", 
+   RowBox[{
+    RowBox[{"1", " ", "=", " ", 
+     RowBox[{"Susceptible", " ", 
+      RowBox[{"(", "Green", ")"}]}]}], ",", " ", 
+    RowBox[{"2", " ", "=", " ", 
+     RowBox[{"Infected", " ", 
+      RowBox[{"(", "Red", ")"}]}]}], ",", " ", 
+    RowBox[{"3", " ", "=", " ", 
+     RowBox[{"Recovered", " ", 
+      RowBox[{"(", "Blue", ")"}]}]}], ",", " ", 
+    RowBox[{"4", " ", "=", " ", 
+     RowBox[{"Dead", " ", 
+      RowBox[{"(", "Yellow", ")"}]}]}]}], "*)"}], "\n", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"gridState", " ", "=", " ", 
+     RowBox[{"Partition", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"1", "*", "susceptibles"}], " ", "+", " ", 
+        RowBox[{"2", "*", "infected"}], " ", "+", " ", 
+        RowBox[{"3", "*", "recovered"}], " ", "+", " ", 
+        RowBox[{"4", "*", "dead"}]}], ",", " ", "L"}], "]"}]}], ";"}], "\n", "\n", 
+   RowBox[{"ArrayPlot", "[", 
+    RowBox[{"gridState", ",", " ", 
+     RowBox[{"ColorRules", " ", "->", " ", 
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"1", " ", "->", " ", "Green"}], ",", " ", 
+        RowBox[{"2", " ", "->", " ", "Red"}], ",", " ", 
+        RowBox[{"3", " ", "->", " ", "Blue"}], ",", " ", 
+        RowBox[{"4", " ", "->", " ", "Yellow"}]}], "}"}]}], ",", "\n", " ", 
+     RowBox[{"Frame", " ", "->", " ", "False"}], ",", " ", 
+     RowBox[{"PlotLabel", " ", "->", " ", 
+      RowBox[{"\"\<Spatial Grid State at Day \>\"", " ", "<>", " ", 
+       RowBox[{"ToString", "[", "numDays", "]"}]}]}]}], "]"}]}]}]], "Input",
+ CellChangeTimes->{{4.000967571409835*^9, 4.000967574002323*^9}, {
+  4.001643014541868*^9, 4.0016431116527147`*^9}, {4.00164418329222*^9, 
+  4.0016441890275593`*^9}, {4.001645926615305*^9, 4.0016459304945707`*^9}},
+ CellLabel->"In[37]:=",ExpressionUUID->"9e603df3-588b-4d72-95ad-b817cc75e4f8"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Simulation and Exporting", "Section",
+ CellChangeTimes->{{4.0016453207124577`*^9, 4.001645322584237*^9}, {
+  4.001648381442885*^9, 4.001648385050602*^9}, {4.002609966677189*^9, 
+  4.002609991772155*^9}},ExpressionUUID->"f4985ad6-aaa9-4561-a216-\
+a5175c91782d"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{
+   "1.", " ", "Semilla", " ", "aleatoria", " ", "y", " ", "reinicio", " ", 
+    "de", " ", "par\[AAcute]metros", " ", "y", " ", "cuadr\[IAcute]cula"}], 
+   "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"SeedRandom", "[", "]"}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"Ro", "=", "8"}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"numDays", "=", "200"}], ";"}], "\[IndentingNewLine]", "\n", 
+   RowBox[{
+    RowBox[{"susceptibles", "=", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"1", ",", "numberOfCells"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"infected", "=", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", "numberOfCells"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"recovered", "=", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", "numberOfCells"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"dead", "=", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", "numberOfCells"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"infectionTime", "=", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", "numberOfCells"}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Paciente", " ", "cero", " ", "k0", " ", "en", " ", "el", " ", "centro"}],
+     "*)"}], "\n", 
+   RowBox[{
+    RowBox[{"k0", "=", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"Quotient", "[", 
+        RowBox[{"L", ",", "2"}], "]"}], "*", "L"}], "+", 
+      RowBox[{"Quotient", "[", 
+       RowBox[{"L", ",", "2"}], "]"}], "+", "1"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"susceptibles", "[", 
+      RowBox[{"[", "k0", "]"}], "]"}], "=", "0"}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"infected", "[", 
+      RowBox[{"[", "k0", "]"}], "]"}], "=", "1"}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"infectionTime", "[", 
+      RowBox[{"[", "k0", "]"}], "]"}], "=", "0"}], ";"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{"Vectores", " ", "hist\[OAcute]ricos"}], "*)"}], "\n", 
+   RowBox[{
+    RowBox[{"historyS", "=", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", "numDays"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"historyI", "=", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", "numDays"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"historyR", "=", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", "numDays"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"historyD", "=", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", "numDays"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"dailyDeaths", "=", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0", ",", "numDays"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Funci\[OAcute]n", " ", "para", " ", "capturar", " ", "el", " ", "estado",
+      " ", "2", "D", " ", "actual"}], "*)"}], "\n", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"getCurrentGrid", "[", "]"}], ":=", 
+     RowBox[{"Partition", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"1", "*", "susceptibles"}], "+", 
+        RowBox[{"2", "*", "infected"}], "+", 
+        RowBox[{"3", "*", "recovered"}], "+", 
+        RowBox[{"4", "*", "dead"}]}], ",", "L"}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", "\n", 
+   RowBox[{
+    RowBox[{"gridSnapshots", "=", 
+     RowBox[{"{", 
+      RowBox[{"{", 
+       RowBox[{"0", ",", 
+        RowBox[{"getCurrentGrid", "[", "]"}]}], "}"}], "}"}]}], ";"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "2.", " ", "Bucle", " ", "temporal", " ", "principal", " ", "de", " ", 
+     "Monte", " ", "Carlo"}], "*)"}], "\n", 
+   RowBox[{
+    RowBox[{"For", "[", 
+     RowBox[{
+      RowBox[{"day", "=", "1"}], ",", 
+      RowBox[{"day", "<=", "numDays"}], ",", 
+      RowBox[{"day", "+=", "delta"}], ",", 
+      RowBox[{
+       RowBox[{"If", "[", 
+        RowBox[{
+         RowBox[{"day", "==", "20"}], ",", 
+         RowBox[{"Ro", "=", "3"}]}], "]"}], ";", 
+       RowBox[{"(*", 
+        RowBox[{
+        "Confinamiento", " ", "en", " ", "el", " ", "d\[IAcute]a", " ", 
+         "20"}], "*)"}], "\[IndentingNewLine]", 
+       RowBox[{"timeStep", "[", "day", "]"}], ";", "\[IndentingNewLine]", 
+       "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{"historyS", "[", 
+         RowBox[{"[", "day", "]"}], "]"}], "=", 
+        RowBox[{"Total", "[", "susceptibles", "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{"historyI", "[", 
+         RowBox[{"[", "day", "]"}], "]"}], "=", 
+        RowBox[{"Total", "[", "infected", "]"}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{"historyR", "[", 
+         RowBox[{"[", "day", "]"}], "]"}], "=", 
+        RowBox[{"Total", "[", "recovered", "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{"historyD", "[", 
+         RowBox[{"[", "day", "]"}], "]"}], "=", 
+        RowBox[{"Total", "[", "dead", "]"}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{"dailyDeaths", "[", 
+         RowBox[{"[", "day", "]"}], "]"}], "=", 
+        RowBox[{"If", "[", 
+         RowBox[{
+          RowBox[{"day", "==", "1"}], ",", 
+          RowBox[{"historyD", "[", 
+           RowBox[{"[", "1", "]"}], "]"}], ",", 
+          RowBox[{
+           RowBox[{"historyD", "[", 
+            RowBox[{"[", "day", "]"}], "]"}], "-", 
+           RowBox[{"historyD", "[", 
+            RowBox[{"[", 
+             RowBox[{"day", "-", "1"}], "]"}], "]"}]}]}], "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{
+        "Captura", " ", "cada", " ", "5", " ", "d\[IAcute]as", " ", "para", " ",
+          "el", " ", "GIF", " ", "y", " ", "en", " ", "el", " ", 
+         "\[UAcute]ltimo", " ", "d\[IAcute]a"}], "*)"}], 
+       "\[IndentingNewLine]", 
+       RowBox[{"If", "[", 
+        RowBox[{
+         RowBox[{
+          RowBox[{
+           RowBox[{"Mod", "[", 
+            RowBox[{"day", ",", "5"}], "]"}], "==", "0"}], "||", 
+          RowBox[{"day", "==", "numDays"}]}], ",", 
+         RowBox[{
+          RowBox[{"AppendTo", "[", 
+           RowBox[{"gridSnapshots", ",", 
+            RowBox[{"{", 
+             RowBox[{"day", ",", 
+              RowBox[{"getCurrentGrid", "[", "]"}]}], "}"}]}], "]"}], ";"}]}],
+         "]"}], ";"}]}], "]"}], ";"}], "\n", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "3.", " ", "Gr\[AAcute]ficas", " ", "de", " ", "evoluci\[OAcute]n", " ", 
+     "temporal", " ", 
+     RowBox[{"(", 
+      RowBox[{"Plot", " ", "1", " ", "y", " ", "Plot", " ", "2"}], ")"}]}], 
+    "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"plotSIR", "=", 
+     RowBox[{"ListLinePlot", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+        "historyS", ",", "historyI", ",", "historyR", ",", "historyD"}], 
+        "}"}], ",", 
+       RowBox[{"PlotLegends", "->", 
+        RowBox[{"{", 
+         RowBox[{"\"\<Susceptible S(t)\>\"", ",", "\"\<Infected I(t)\>\"", 
+          ",", "\"\<Recovered R(t)\>\"", ",", "\"\<Dead D(t)\>\""}], "}"}]}], 
+       ",", 
+       RowBox[{"PlotStyle", "->", 
+        RowBox[{"{", 
+         RowBox[{"Green", ",", "Red", ",", "Blue", ",", "Yellow"}], "}"}]}], ",", 
+       RowBox[{"Frame", "->", "True"}], ",", 
+       RowBox[{"FrameLabel", "->", 
+        RowBox[{"{", 
+         RowBox[{"\"\<Days\>\"", ",", "\"\<Number of Individuals\>\""}], 
+         "}"}]}], ",", 
+       RowBox[{
+       "PlotLabel", 
+        "->", "\"\<Monte Carlo Planck (MCP) Model Evolution\>\""}], ",", 
+       RowBox[{"ImageSize", "->", "400"}]}], "]"}]}], ";"}], "\n", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"plotDeaths", "=", 
+     RowBox[{"DiscretePlot", "[", 
+      RowBox[{
+       RowBox[{"dailyDeaths", "[", 
+        RowBox[{"[", "t", "]"}], "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"t", ",", "1", ",", "numDays"}], "}"}], ",", 
+       RowBox[{"PlotStyle", "->", "Purple"}], ",", 
+       RowBox[{"Frame", "->", "True"}], ",", 
+       RowBox[{"FrameLabel", "->", 
+        RowBox[{"{", 
+         RowBox[{"\"\<Days\>\"", ",", "\"\<Deaths / Day\>\""}], "}"}]}], ",", 
+       
+       RowBox[{
+       "PlotLabel", "->", "\"\<Daily Deaths (with Lockdown at Day 20)\>\""}], 
+       ",", 
+       RowBox[{"ImageSize", "->", "400"}]}], "]"}]}], ";"}], "\n", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"Print", "[", 
+     RowBox[{"Row", "[", 
+      RowBox[{"{", 
+       RowBox[{"plotSIR", ",", 
+        RowBox[{"Spacer", "[", "20", "]"}], ",", "plotDeaths"}], "}"}], "]"}],
+      "]"}], ";"}], "\n", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "4.", " ", "Generaci\[OAcute]n", " ", "de", " ", "TODOS", " ", "los", " ",
+      "fotogramas", " ", "para", " ", "el", " ", "GIF"}], "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"allGifPlots", "=", 
+     RowBox[{"Map", "[", 
+      RowBox[{
+       RowBox[{"Function", "[", 
+        RowBox[{
+         RowBox[{"{", "snapshot", "}"}], ",", 
+         RowBox[{"ArrayPlot", "[", 
+          RowBox[{
+           RowBox[{"snapshot", "[", 
+            RowBox[{"[", "2", "]"}], "]"}], ",", 
+           RowBox[{"ColorRules", "->", 
+            RowBox[{"{", 
+             RowBox[{
+              RowBox[{"1", "->", "Green"}], ",", 
+              RowBox[{"2", "->", "Red"}], ",", 
+              RowBox[{"3", "->", "Blue"}], ",", 
+              RowBox[{"4", "->", "Yellow"}]}], "}"}]}], ",", 
+           RowBox[{"Frame", "->", "True"}], ",", 
+           RowBox[{"FrameTicks", "->", "None"}], ",", 
+           RowBox[{"PlotLabel", "->", 
+            RowBox[{"Style", "[", 
+             RowBox[{
+              RowBox[{"\"\<Day \>\"", "<>", 
+               RowBox[{"ToString", "[", 
+                RowBox[{"snapshot", "[", 
+                 RowBox[{"[", "1", "]"}], "]"}], "]"}]}], ",", "Bold", ",", 
+              "12"}], "]"}]}], ",", 
+           RowBox[{"ImageSize", "->", "220"}]}], "]"}]}], "]"}], ",", 
+       "gridSnapshots"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "5.", " ", "Selecci\[OAcute]n", " ", "de", " ", "1", " ", "de", " ", 
+     "cada", " ", "5", " ", "capturas", " ", "para", " ", "el", " ", 
+     "Mosaico", " ", 
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"d\[IAcute]as", " ", "0"}], ",", "25", ",", "50", ",", "...", ",",
+        "200"}], ")"}]}], "*)"}], "\n", 
+   RowBox[{
+    RowBox[{"salto", "=", "4"}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"selectedSnapshots", "=", 
+     RowBox[{"DeleteDuplicates", "[", 
+      RowBox[{"Append", "[", 
+       RowBox[{
+        RowBox[{"gridSnapshots", "[", 
+         RowBox[{"[", 
+          RowBox[{"1", ";;", 
+           RowBox[{"-", "1"}], ";;", "salto"}], "]"}], "]"}], ",", 
+        RowBox[{"Last", "[", "gridSnapshots", "]"}]}], "]"}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", "\n", 
+   RowBox[{
+    RowBox[{"plotsGrid", "=", 
+     RowBox[{"Map", "[", 
+      RowBox[{
+       RowBox[{"Function", "[", 
+        RowBox[{
+         RowBox[{"{", "snapshot", "}"}], ",", 
+         RowBox[{"ArrayPlot", "[", 
+          RowBox[{
+           RowBox[{"snapshot", "[", 
+            RowBox[{"[", "2", "]"}], "]"}], ",", 
+           RowBox[{"ColorRules", "->", 
+            RowBox[{"{", 
+             RowBox[{
+              RowBox[{"1", "->", "Green"}], ",", 
+              RowBox[{"2", "->", "Red"}], ",", 
+              RowBox[{"3", "->", "Blue"}], ",", 
+              RowBox[{"4", "->", "Yellow"}]}], "}"}]}], ",", 
+           RowBox[{"Frame", "->", "True"}], ",", 
+           RowBox[{"FrameTicks", "->", "None"}], ",", 
+           RowBox[{"PlotLabel", "->", 
+            RowBox[{"Style", "[", 
+             RowBox[{
+              RowBox[{"\"\<Day \>\"", "<>", 
+               RowBox[{"ToString", "[", 
+                RowBox[{"snapshot", "[", 
+                 RowBox[{"[", "1", "]"}], "]"}], "]"}]}], ",", "Bold", ",", 
+              "12"}], "]"}]}], ",", 
+           RowBox[{"ImageSize", "->", "180"}]}], "]"}]}], "]"}], ",", 
+       "selectedSnapshots"}], "]"}]}], ";"}], "\[IndentingNewLine]", "\n", 
+   RowBox[{
+    RowBox[{"mosaico", "=", 
+     RowBox[{"Grid", "[", 
+      RowBox[{
+       RowBox[{"Partition", "[", 
+        RowBox[{"plotsGrid", ",", 
+         RowBox[{"UpTo", "[", "3", "]"}]}], "]"}], ",", 
+       RowBox[{"Spacings", "->", 
+        RowBox[{"{", 
+         RowBox[{"1.5", ",", "1.5"}], "}"}]}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "6.", " ", "Guardado", " ", "autom\[AAcute]tico", " ", "en", " ", "la", " ",
+      "carpeta", " ", "del", " ", "Notebook"}], "*)"}], "\n", 
+   RowBox[{
+    RowBox[{"SetDirectory", "[", 
+     RowBox[{"NotebookDirectory", "[", "]"}], "]"}], ";"}], "\n", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"Export", "[", 
+     RowBox[{"\"\<simulacion_covid40.gif\>\"", ",", "allGifPlots", ",", 
+      RowBox[{"\"\<DisplayDurations\>\"", "->", "0.5"}], ",", 
+      RowBox[{"\"\<AnimationRepetitions\>\"", "->", "Infinity"}]}], "]"}], 
+    ";"}], "\n", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"Export", "[", 
+     RowBox[{"\"\<mosaico_evolucion_espacial40.png\>\"", ",", "mosaico", ",", 
+      
+      RowBox[{"ImageResolution", "->", "300"}]}], "]"}], ";"}], "\n", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+    "Print", "[", "\"\<\[DownExclamation]Archivos 'simulacion_covid.gif' y \
+'mosaico_evolucion_espacial.png' guardados correctamente!\>\"", "]"}], ";"}], 
+   "\n", "mosaico"}]}]], "Input",
+ CellChangeTimes->{{4.001648163245264*^9, 4.001648165822234*^9}, {
+  4.001648273129698*^9, 4.0016482849450283`*^9}, {4.001648317373239*^9, 
+  4.001648396416938*^9}, {4.001648519850089*^9, 4.001648527049801*^9}, {
+  4.001648595740398*^9, 4.001648597747113*^9}, {4.001648703171277*^9, 
+  4.0016487089624662`*^9}, {4.0026095487983303`*^9, 4.002609552968177*^9}, {
+  4.002609638367786*^9, 4.0026096567904882`*^9}, {4.0037566860061607`*^9, 
+  4.003756686714801*^9}},ExpressionUUID->"e540870c-bba8-4fdc-8650-\
+6365edcf1d92"]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1887, 1015.5},
+WindowMargins->{{0, Automatic}, {Automatic, 0}},
+SpellingDictionaries->{"CorrectWords"->{"Ejecucion", "interactiva"}},
+FrontEndVersion->"15.0 for Linux x86 (64-bit) (July 2, 2026)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"c6a059a8-6d28-4fdb-8ea7-8c221bc8fbce"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[554, 20, 129, 3, 29, "Input",ExpressionUUID->"2805f54c-c879-4239-b0c3-f0d69109d3bc"],
+Cell[686, 25, 658, 11, 55, "Text",ExpressionUUID->"04f71ffe-c104-48c2-afa3-4e39b32cd2df"],
+Cell[CellGroupData[{
+Cell[1369, 40, 163, 3, 67, "Chapter",ExpressionUUID->"ebb2b8a6-ef45-449c-ba02-703540fec42a"],
+Cell[CellGroupData[{
+Cell[1557, 47, 210, 4, 65, "Section",ExpressionUUID->"6edb3768-4302-49eb-8b2b-c19ab42af38a"],
+Cell[1770, 53, 2909, 75, 209, "Input",ExpressionUUID->"032002af-173d-4030-aaab-d8e5f43df854"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[4716, 133, 219, 4, 65, "Section",ExpressionUUID->"3455a5b1-2cce-480e-b1e1-316d33760791"],
+Cell[4938, 139, 752, 15, 63, "Input",ExpressionUUID->"455a24f4-9b6e-4c77-a01f-a81f8bd36d68"],
+Cell[5693, 156, 744, 20, 88, "Input",ExpressionUUID->"94326346-3647-469d-9053-73f06a88a4b3"],
+Cell[6440, 178, 420, 11, 29, "Input",ExpressionUUID->"24758585-57f9-4e53-a377-068b2d72cddc"],
+Cell[6863, 191, 766, 17, 29, "Input",ExpressionUUID->"08ee26fe-8355-47a1-a4e8-ee653cdb1fda"],
+Cell[7632, 210, 599, 14, 29, "Input",ExpressionUUID->"6a4e159f-1273-439e-a81e-58e67bb5bd88"],
+Cell[8234, 226, 317, 6, 29, "Input",ExpressionUUID->"38b42622-f932-4eec-ad10-97c8dfa35260"],
+Cell[8554, 234, 441, 11, 54, "Input",ExpressionUUID->"ebb17dfb-37b8-42c4-a0f7-b401ae0e9265"],
+Cell[8998, 247, 797, 18, 49, "Input",ExpressionUUID->"19eafe2c-a699-4e65-96f8-f6b58150b3ba"],
+Cell[9798, 267, 1054, 25, 69, "Input",ExpressionUUID->"90b1f1ae-844d-4666-a586-a057b7868f11"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[10889, 297, 185, 3, 65, "Section",ExpressionUUID->"8c3dccfb-05fb-454e-9019-dc8fa3688199"],
+Cell[11077, 302, 292, 5, 29, "Input",ExpressionUUID->"fe8e3ded-6d75-4418-9a0e-b85f91490414"],
+Cell[11372, 309, 1355, 32, 129, "Input",ExpressionUUID->"f0886efc-f615-4d4b-9703-50bd3c5667a7"],
+Cell[12730, 343, 1410, 37, 129, "Input",ExpressionUUID->"3654a306-dd2a-4a99-bc30-bb326558a97d"],
+Cell[14143, 382, 4633, 114, 394, "Input",ExpressionUUID->"7e9329a6-f9ad-474d-83e1-07c7a215cab6"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[18825, 502, 156, 3, 67, "Chapter",ExpressionUUID->"40e18cd5-e7d2-4639-a444-971cd449b1e4"],
+Cell[CellGroupData[{
+Cell[19006, 509, 158, 3, 65, "Section",ExpressionUUID->"eb02fa84-9c3f-4e60-b7ea-b254c4a8dc3c"],
+Cell[19167, 514, 7585, 175, 445, "Input",ExpressionUUID->"cd9cd3cb-9bca-4be6-9134-87dbb411551b"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[26801, 695, 206, 4, 67, "Chapter",ExpressionUUID->"5b0a8101-609b-43af-97f5-1bc8389959c9"],
+Cell[CellGroupData[{
+Cell[27032, 703, 168, 3, 65, "Section",ExpressionUUID->"e532a7b5-9a3f-42de-bb58-4d9a6409d3f5"],
+Cell[27203, 708, 401, 9, 49, "Input",ExpressionUUID->"77ae7fa7-e71f-4b48-a511-c041e9fa948d"],
+Cell[27607, 719, 1425, 38, 129, "Input",ExpressionUUID->"87b64ada-b013-449e-8ed5-3f1b927f6b07"],
+Cell[29035, 759, 2745, 64, 249, "Input",ExpressionUUID->"2ad4ab68-639b-4b9f-bee7-d1d42d01f0d0"],
+Cell[31783, 825, 1428, 35, 129, "Input",ExpressionUUID->"d006d62a-4b8c-4e1a-8709-d24c5c385009"],
+Cell[33214, 862, 1216, 30, 89, "Input",ExpressionUUID->"cde708be-caac-4738-86ea-62a3c8a26bae"],
+Cell[34433, 894, 2203, 52, 149, "Input",ExpressionUUID->"9e603df3-588b-4d72-95ad-b817cc75e4f8"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[36673, 951, 266, 4, 65, "Section",ExpressionUUID->"f4985ad6-aaa9-4561-a216-a5175c91782d"],
+Cell[36942, 957, 14081, 364, 1438, "Input",ExpressionUUID->"e540870c-bba8-4fdc-8650-6365edcf1d92"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
+
